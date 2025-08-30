@@ -8,6 +8,11 @@
 </head>
 <body>
   <h1>🥟 Samosa Orders</h1>
+<div>
+  <label>Your Email:</label>
+  <input type="text" id="emailBox" readonly />
+</div>
+
 
   <!-- Order Form -->
   <div id="orderForm">
@@ -22,77 +27,44 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwc6QZuiSCUc2kgdfxmn4uefZSf9KyBOLlen-Z9KdOacdrkOq7JzEKeWVsZKSt29qYs/exec";    
-
     // Fetch today's orders
-    async function loadOrders() {
-      const res = await fetch(`${API_URL}?email=${EMAIL}`);
-      const data = await res.json();
+console.log("🥟 Samosa PWA loaded!");
 
-      const list = document.getElementById("ordersList");
-      list.innerHTML = "";
+async function loadOrders() {
+  console.log("Loading orders from API:", API_URL);
 
-      if (data.result === "success") {
-        data.data.forEach(order => {
-          const li = document.createElement("li");
-          li.textContent = `${order.item} x${order.qtyOrdered} (${order.notes}) - ${order.status}`;
+  const res = await fetch(API_URL);
+  const data = await res.json();
 
-          // If this is my order and not served, show delete button
-          if (order.supervisor === EMAIL && order.qtyPicked == 0) {
-            const btn = document.createElement("button");
-            btn.textContent = "❌ Delete";
-            btn.onclick = () => deleteOrder(order.rowID);
-            li.appendChild(btn);
-          }
+  console.log("API response:", data);   // 👈 debug log
 
-          list.appendChild(li);
-        });
-      } else {
-        list.innerHTML = `<li>Error: ${data.message}</li>`;
+  USER_EMAIL = data.email || "";
+  document.getElementById("emailBox").value = USER_EMAIL;
+
+  const list = document.getElementById("ordersList");
+  list.innerHTML = "";
+
+  if (data.result === "success") {
+    data.data.forEach(order => {
+      console.log("Rendering order:", order);   // 👈 debug log
+
+      const li = document.createElement("li");
+      li.textContent = `${order.item} x${order.qtyOrdered} (${order.notes}) - ${order.status}`;
+
+      if (order.supervisor === USER_EMAIL && order.qtyPicked == 0) {
+        const btn = document.createElement("button");
+        btn.textContent = "❌ Delete";
+        btn.onclick = () => deleteOrder(order.rowID);
+        li.appendChild(btn);
       }
-    }
 
-    // Create new order
-    async function createOrder() {
-      const item = document.getElementById("item").value;
-      const qtyOrdered = document.getElementById("qtyOrdered").value;
-      const notes = document.getElementById("notes").value;
+      list.appendChild(li);
+    });
+  }
+}
 
-      const payload = {
-        action: "create",
-        email: EMAIL,
-        item,
-        qtyOrdered,
-        notes
-      };
 
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      const result = await res.json();
-      alert(result.message || "Order placed!");
-      loadOrders();
-    }
 
-    // Delete order
-    async function deleteOrder(rowID) {
-      const payload = {
-        action: "delete",
-        email: EMAIL,
-        rowID
-      };
-
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      const result = await res.json();
-      alert(result.message);
-      loadOrders();
-    }
-
-    // Load orders on page load
-    loadOrders();
-  </script>
+    </script>
 </body>
 </html>
