@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Samosa PWA</title>
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Theme color for browser -->
+  <meta name="theme-color" content="#ff9800"/>
+
+  <!-- Icons -->
+  <link rel="icon" href="assets/icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="assets/icons/icon-512.png">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <h1>🥟 Welcome to Samosa PWA</h1>
+  <p>Your progressive snack app is ready!</p>
+
+  <button onclick="alert('Hot Samosa!')">Order Now</button>
+
+  <!-- JS -->
+  <script src="assets/app.js"></script>
+
+  <!-- Register service worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('Service Worker Registered'))
+        .catch(err => console.error('SW registration failed:', err));
+    }
+  </script>
+</body>
+</html>
