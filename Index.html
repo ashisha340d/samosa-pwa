@@ -3,37 +3,96 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Samosa PWA</title>
-
-  <!-- PWA manifest -->
-  <link rel="manifest" href="manifest.json" />
-
-  <!-- Theme color for browser -->
-  <meta name="theme-color" content="#ff9800"/>
-
-  <!-- Icons -->
-  <link rel="icon" href="assets/icons/icon-192.png" sizes="192x192">
-  <link rel="apple-touch-icon" href="assets/icons/icon-512.png">
-
-  <!-- CSS -->
+  <title>Samosa Order Chat</title>
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
-  <h1>🥟 Welcome to Samosa PWA</h1>
-  <p>Your progressive snack app is ready!</p>
+  <h1>🥟 Samosa Orders</h1>
 
-  <button onclick="alert('Hot Samosa!')">Order Now</button>
+  <!-- Order Form -->
+  <div id="orderForm">
+    <input type="text" id="item" placeholder="Item (e.g. Samosa)" />
+    <input type="number" id="qtyOrdered" placeholder="Qty" />
+    <input type="text" id="notes" placeholder="Notes" />
+    <button onclick="createOrder()">Place Order</button>
+  </div>
 
-  <!-- JS -->
-  <script src="assets/app.js"></script>
+  <h2>Today’s Orders</h2>
+  <ul id="ordersList"></ul>
 
-  <!-- Register service worker -->
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log('Service Worker Registered'))
-        .catch(err => console.error('SW registration failed:', err));
+    const API_URL = "https://script.google.com/macros/s/AKfycbwc6QZuiSCUc2kgdfxmn4uefZSf9KyBOLlen-Z9KdOacdrkOq7JzEKeWVsZKSt29qYs/exec";    
+
+    // Fetch today's orders
+    async function loadOrders() {
+      const res = await fetch(`${API_URL}?email=${EMAIL}`);
+      const data = await res.json();
+
+      const list = document.getElementById("ordersList");
+      list.innerHTML = "";
+
+      if (data.result === "success") {
+        data.data.forEach(order => {
+          const li = document.createElement("li");
+          li.textContent = `${order.item} x${order.qtyOrdered} (${order.notes}) - ${order.status}`;
+
+          // If this is my order and not served, show delete button
+          if (order.supervisor === EMAIL && order.qtyPicked == 0) {
+            const btn = document.createElement("button");
+            btn.textContent = "❌ Delete";
+            btn.onclick = () => deleteOrder(order.rowID);
+            li.appendChild(btn);
+          }
+
+          list.appendChild(li);
+        });
+      } else {
+        list.innerHTML = `<li>Error: ${data.message}</li>`;
+      }
     }
+
+    // Create new order
+    async function createOrder() {
+      const item = document.getElementById("item").value;
+      const qtyOrdered = document.getElementById("qtyOrdered").value;
+      const notes = document.getElementById("notes").value;
+
+      const payload = {
+        action: "create",
+        email: EMAIL,
+        item,
+        qtyOrdered,
+        notes
+      };
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+      alert(result.message || "Order placed!");
+      loadOrders();
+    }
+
+    // Delete order
+    async function deleteOrder(rowID) {
+      const payload = {
+        action: "delete",
+        email: EMAIL,
+        rowID
+      };
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+      alert(result.message);
+      loadOrders();
+    }
+
+    // Load orders on page load
+    loadOrders();
   </script>
 </body>
 </html>
